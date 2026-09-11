@@ -173,7 +173,15 @@ strong,b{font-weight:700}
 .vplay:hover .vbtn{transform:scale(1.06);background:var(--red-hi)}
 .vbtn svg{width:84px;height:84px;fill:#fff;margin-left:10px}
 .vbtn.replay svg{margin-left:0}
-.vhint{position:absolute;left:0;right:0;bottom:150px;text-align:center;font-size:30px;font-weight:600;color:var(--cream-70);letter-spacing:.02em;z-index:4;pointer-events:none;transition:opacity .35s}
+.vhint{
+  position:absolute;left:50%;bottom:150px;transform:translateX(-50%);white-space:nowrap;z-index:4;pointer-events:none;
+  font-size:28px;font-weight:500;color:var(--cream-70);
+  padding:16px 34px;border-radius:999px;background:rgba(20,8,11,.8);border:1px solid var(--line);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  transition:opacity .35s;
+}
+.vhint b{color:var(--cream);font-weight:700}
+.vhint i{color:var(--red-hi);font-style:normal;font-weight:700;margin:0 14px}
 .vbar{
   position:absolute;left:120px;right:120px;bottom:136px;z-index:5;display:flex;align-items:center;gap:28px;
   opacity:0;transition:opacity .35s var(--ease);
@@ -327,7 +335,7 @@ body.black .blackout{opacity:1;pointer-events:auto}
    </div>
   </div>
   <div class="vplay" id="vplay"><div class="vbtn" id="vbtn"><svg viewBox="0 0 24 24"><path d="M6 3.5v17l14-8.5z"/></svg></div></div>
-  <div class="vhint" id="vhint">Клікніце, каб прайграць · <b>прабел</b> — паўза</div>
+  <div class="vhint" id="vhint"><b>Далей</b> — прайграць<i>·</i><b>Назад</b> — паўза<i>·</i><b>Назад ×2</b> — спачатку<i>·</i><b>Далей ×2</b> — наступны слайд</div>
   <div class="vbar"><div class="track" id="vtrack"><div class="fill" id="vfill"></div></div><div class="time" id="vtime">0:00 / 0:00</div></div>
   <div class="verr">Відэафайл не знойдзены. Пакладзіце файл <b>«Філаматы і філарэты.mp4»</b> у тую ж папку, што і index.html.</div>
  </div>
@@ -541,6 +549,12 @@ body.black .blackout{opacity:1;pointer-events:auto}
     cover: document.getElementById('vcover'), play: document.getElementById('vplay'), btn: document.getElementById('vbtn'),
     hint: document.getElementById('vhint'), track: document.getElementById('vtrack'), fill: document.getElementById('vfill'), time: document.getElementById('vtime'),
   };
+  const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M6 3.5v17l14-8.5z"/></svg>';
+  const ICON_REPLAY = '<svg viewBox="0 0 24 24"><path d="M12 5a7 7 0 1 1-6.3 4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M5 3v6h6z"/></svg>';
+  function setPlayIcon(replay){
+    V.btn.classList.toggle('replay', !!replay);
+    V.btn.innerHTML = replay ? ICON_REPLAY : ICON_PLAY;
+  }
   const fmt = t => { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
   function isVideoSlide(){ return slides[i].hasAttribute('data-video'); }
   function toggleVideo(){
@@ -557,16 +571,12 @@ body.black .blackout{opacity:1;pointer-events:auto}
   V.el.addEventListener('click', toggleVideo);
   V.el.addEventListener('play', () => {
     V.cover.classList.add('gone'); V.play.classList.add('gone'); V.hint.style.opacity = 0;
-    document.body.classList.add('playing'); V.btn.classList.remove('replay');
-    V.btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 3.5v17l14-8.5z"/></svg>'; showBar();
+    document.body.classList.add('playing'); setPlayIcon(false); showBar();
   });
   V.el.addEventListener('pause', () => {
     V.play.classList.remove('gone'); document.body.classList.remove('playing'); V.wrap.classList.add('show-bar');
   });
-  V.el.addEventListener('ended', () => {
-    V.btn.classList.add('replay');
-    V.btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 5a7 7 0 1 1-6.3 4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M5 3v6h6z"/></svg>';
-  });
+  V.el.addEventListener('ended', () => setPlayIcon(true));
   V.el.addEventListener('timeupdate', () => {
     if (V.el.duration) V.fill.style.width = (V.el.currentTime / V.el.duration * 100) + '%';
     V.time.textContent = fmt(V.el.currentTime) + ' / ' + fmt(V.el.duration);
@@ -589,7 +599,7 @@ body.black .blackout{opacity:1;pointer-events:auto}
       s.classList.toggle('active', k === i);
       s.classList.toggle('leaving', k === from && from !== i);
     });
-    if (from !== i && !V.el.paused) V.el.pause();
+    if (from !== i) { resetClicker(); if (!V.el.paused) V.el.pause(); }
     segs.forEach((s, k) => s.classList.toggle('done', k <= i));
     counter.textContent = String(i + 1).padStart(2, '0') + ' / ' + String(N).padStart(2, '0');
     prevBtn.disabled = i === 0; nextBtn.disabled = i === N - 1;
@@ -600,6 +610,46 @@ body.black .blackout{opacity:1;pointer-events:auto}
   const next = () => show(i + 1), prev = () => show(i - 1);
   prevBtn.addEventListener('click', prev);
   nextBtn.addEventListener('click', next);
+
+  /* ---- presentation clicker on the video slide ----
+     далей          → прайграць
+     далей ×2       → наступны слайд
+     назад          → паўза (а калі ўжо на паўзе — папярэдні слайд)
+     назад ×2       → перамотка на пачатак                                */
+  const DBL = 420;
+  let lastNext = 0, lastPrev = 0, nextTimer = null, prevTimer = null;
+  function resetClicker(){
+    clearTimeout(nextTimer); clearTimeout(prevTimer);
+    nextTimer = prevTimer = null; lastNext = lastPrev = 0;
+  }
+  function videoNext(){
+    const now = performance.now();
+    if (now - lastNext < DBL) { resetClicker(); V.el.pause(); next(); return; }
+    lastNext = now;
+    clearTimeout(nextTimer);
+    nextTimer = setTimeout(() => {
+      nextTimer = null;
+      if (V.wrap.classList.contains('error')) { next(); return; }
+      if (V.el.paused) V.el.play().catch(() => {});
+    }, DBL);
+  }
+  function videoPrev(){
+    const now = performance.now();
+    if (now - lastPrev < DBL) {
+      resetClicker();
+      V.el.pause(); V.el.currentTime = 0; setPlayIcon(false); showBar();
+      return;
+    }
+    lastPrev = now;
+    clearTimeout(prevTimer);
+    if (!V.el.paused && !V.wrap.classList.contains('error')) {
+      V.el.pause();
+    } else {
+      prevTimer = setTimeout(() => { prevTimer = null; prev(); }, DBL);
+    }
+  }
+  const goNext = () => isVideoSlide() ? videoNext() : next();
+  const goPrev = () => isVideoSlide() ? videoPrev() : prev();
 
   function fullscreen(){
     const d = document.documentElement;
@@ -615,9 +665,10 @@ body.black .blackout{opacity:1;pointer-events:auto}
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     const k = e.key;
     hint.classList.add('gone');
-    if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown') { e.preventDefault(); next(); }
-    else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp' || k === 'Backspace') { e.preventDefault(); prev(); }
-    else if (k === ' ' || k === 'Enter' || k === 'k' || k === 'K') { e.preventDefault(); if (isVideoSlide()) toggleVideo(); else next(); }
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown') { e.preventDefault(); goNext(); }
+    else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp' || k === 'Backspace') { e.preventDefault(); goPrev(); }
+    else if (k === ' ' || k === 'Enter') { e.preventDefault(); goNext(); }
+    else if (k === 'k' || k === 'K') { e.preventDefault(); if (isVideoSlide()) toggleVideo(); else next(); }
     else if (k === 'Home') { e.preventDefault(); show(0); }
     else if (k === 'End') { e.preventDefault(); show(N - 1); }
     else if (k === 'f' || k === 'F' || k === 'а' || k === 'А') { fullscreen(); }
