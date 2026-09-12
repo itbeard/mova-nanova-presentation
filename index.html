@@ -519,7 +519,7 @@ body.black .blackout{opacity:1;pointer-events:auto}
 <!-- chrome -->
 <div class="progress" id="progress" title="Перайсці да слайда"></div>
 <div class="brand"><i></i>Мова Нанова</div>
-<div class="counter" id="counter">01 / 15</div>
+<div class="counter" id="counter">01 / 16</div>
 <div class="nav">
  <button id="prev" aria-label="Папярэдні слайд"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
  <button id="next" aria-label="Наступны слайд"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
@@ -604,9 +604,9 @@ body.black .blackout{opacity:1;pointer-events:auto}
   V.wrap.addEventListener('mousemove', showBar);
 
   /* ---- navigation ---- */
-  function show(n, instant){
+  function show(n, force){
     n = Math.max(0, Math.min(N - 1, n));
-    if (n === i && slides[n].classList.contains('active')) return;
+    if (n === i && slides[n].classList.contains('active') && !force) return;
     const from = i; i = n;
     slides.forEach((s, k) => {
       s.classList.toggle('active', k === i);
@@ -713,7 +713,7 @@ body.black .blackout{opacity:1;pointer-events:auto}
 
   /* deep link: index.html#7 */
   const h = parseInt(location.hash.slice(1), 10);
-  show(Number.isFinite(h) && h >= 1 && h <= N ? h - 1 : 0, true);
+  show(Number.isFinite(h) && h >= 1 && h <= N ? h - 1 : 0, true);   // force: sync counter, progress, buttons
   addEventListener('hashchange', () => { const n = parseInt(location.hash.slice(1), 10); if (Number.isFinite(n)) show(n - 1); });
 })();
 </script>
