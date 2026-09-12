@@ -190,9 +190,18 @@ strong,b{font-weight:700}
 .vbar .track{flex:1;height:14px;border-radius:7px;background:rgba(255,255,255,.22);cursor:pointer;position:relative;overflow:hidden}
 .vbar .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--red-hi);border-radius:7px}
 .vbar .time{font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--cream);min-width:210px;text-align:right;text-shadow:0 2px 8px rgba(0,0,0,.8)}
-.verr{position:absolute;left:120px;right:120px;bottom:200px;z-index:6;display:none;font-size:34px;line-height:1.35;padding:32px 40px;border-radius:20px;background:rgba(15,5,7,.85);border:1px solid var(--line)}
+.verr{
+  position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);z-index:6;display:none;
+  width:min(1120px,76%);text-align:center;padding:56px 64px;border-radius:28px;
+  background:rgba(20,8,11,.84);border:1px solid var(--line);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
 .vwrap.error .verr{display:block}
-.vwrap.error .vplay,.vwrap.error .vhint{display:none}
+.vwrap.error .vplay,.vwrap.error .vhint,.vwrap.error .vbar{display:none}
+.verr .ico{width:104px;height:104px;margin:0 auto 30px;border-radius:50%;background:rgba(228,38,43,.16);border:1px solid rgba(228,38,43,.55);display:flex;align-items:center;justify-content:center}
+.verr .ico svg{width:50px;height:50px;fill:none;stroke:var(--red-hi);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.verr p{font-size:42px;line-height:1.24;font-weight:700}
+.verr small{display:block;font-size:30px;line-height:1.32;font-weight:400;color:var(--cream-70);margin-top:20px}
 
 /* ---------- chrome ---------- */
 .progress{
@@ -337,7 +346,11 @@ body.black .blackout{opacity:1;pointer-events:auto}
   <div class="vplay" id="vplay"><div class="vbtn" id="vbtn"><svg viewBox="0 0 24 24"><path d="M6 3.5v17l14-8.5z"/></svg></div></div>
   <div class="vhint" id="vhint"><b>Далей</b> — прайграць<i>·</i><b>Назад</b> — паўза<i>·</i><b>Назад ×2</b> — спачатку<i>·</i><b>Далей ×2</b> — наступны слайд</div>
   <div class="vbar"><div class="track" id="vtrack"><div class="fill" id="vfill"></div></div><div class="time" id="vtime">0:00 / 0:00</div></div>
-  <div class="verr">Відэафайл не знойдзены. Пакладзіце файл <b>«Філаматы і філарэты.mp4»</b> у тую ж папку, што і index.html.</div>
+  <div class="verr">
+   <div class="ico"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M10 9.7v4.6l4-2.3z"/></svg></div>
+   <p>Відэа паказваецца ў лакальнай версіі прэзентацыі</p>
+   <small>Файл «Філаматы і філарэты.mp4» мусіць ляжаць побач з index.html</small>
+  </div>
  </div>
 </section>
 
@@ -648,8 +661,9 @@ body.black .blackout{opacity:1;pointer-events:auto}
       prevTimer = setTimeout(() => { prevTimer = null; prev(); }, DBL);
     }
   }
-  const goNext = () => isVideoSlide() ? videoNext() : next();
-  const goPrev = () => isVideoSlide() ? videoPrev() : prev();
+  const videoReady = () => isVideoSlide() && !V.wrap.classList.contains('error');
+  const goNext = () => videoReady() ? videoNext() : next();
+  const goPrev = () => videoReady() ? videoPrev() : prev();
 
   function fullscreen(){
     const d = document.documentElement;
