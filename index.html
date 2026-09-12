@@ -617,6 +617,7 @@ body.black .blackout{opacity:1;pointer-events:auto}
     counter.textContent = String(i + 1).padStart(2, '0') + ' / ' + String(N).padStart(2, '0');
     prevBtn.disabled = i === 0; nextBtn.disabled = i === N - 1;
     document.body.classList.toggle('on-video', isVideoSlide());
+    if (i !== 0) hint.classList.add('gone');
     history.replaceState(null, '', '#' + (i + 1));
     if (isVideoSlide()) V.el.load && V.el.readyState === 0 && V.el.load();
   }
